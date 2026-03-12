@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カード家計簿</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== Main App ===== -->
+  <div id="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">💳 カード家計簿</div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-page="dashboard">ダッシュボード</button>
+        <button class="nav-btn" data-page="transactions">明細</button>
+        <button class="nav-btn" data-page="settings">設定</button>
+      </nav>
+      <div class="header-right">
+        <button id="gmail-sync-btn" class="btn btn-outline btn-sm">📧 メール同期</button>
+      </div>
+    </header>
+
+    <!-- Month Bar -->
+    <div class="month-bar">
+      <button id="prev-month" class="month-arrow">‹</button>
+      <span id="month-label" class="month-label"></span>
+      <button id="next-month" class="month-arrow">›</button>
+    </div>
+
+    <!-- Pages -->
+    <main class="main">
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-toolbar">
+          <button id="refresh-btn" class="btn btn-outline btn-sm">🔄 更新</button>
+        </div>
+        <div id="budget-summary"></div>
+        <div class="charts-row">
+          <div class="card chart-card">
+            <div class="card-title">カテゴリ別</div>
+            <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-title">月別推移</div>
+            <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions -->
+      <div id="page-transactions" class="page">
+        <div class="page-toolbar">
+          <button id="add-tx-btn" class="btn btn-primary">＋ 手動追加</button>
+        </div>
+        <div id="transaction-list"></div>
+      </div>
+
+      <!-- Settings -->
+      <div id="page-settings" class="page">
+
+        <div class="card settings-section">
+          <div class="card-title">📧 Gmail連携設定</div>
+          <div class="form-group">
+            <label>Google Client ID</label>
+            <input type="text" id="client-id-input" placeholder="例: 123456789-xxxx.apps.googleusercontent.com">
+          </div>
+          <div class="form-group">
+            <label>メール検索クエリ</label>
+            <input type="text" id="gmail-query-input">
+          </div>
+          <button id="save-gmail-btn" class="btn btn-primary">保存</button>
+          <div class="settings-note">
+            Gmail同期を使う場合のみ設定が必要です。詳細は <strong>README.md</strong> を参照。
+          </div>
+        </div>
+
+        <div class="card settings-section">
+          <div class="card-title">💰 月別予算設定（表示中の月）</div>
+          <div id="budget-settings-form"></div>
+          <button id="save-budget-btn" class="btn btn-primary">保存</button>
+        </div>
+
+        <div class="card settings-section">
+          <div class="card-title">🏷️ カテゴリ管理</div>
+          <div id="category-list"></div>
+          <button id="add-category-btn" class="btn btn-outline" style="margin-top:8px">＋ カテゴリを追加</button>
+        </div>
+
+        <div class="card settings-section danger-zone">
+          <div class="card-title">⚠️ データ管理</div>
+          <button id="reset-emails-btn" class="btn btn-danger-outline">メール取得履歴をリセット</button>
+          <button id="reset-all-btn" class="btn btn-danger">全データをリセット</button>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== Modal: Transaction ===== -->
+  <div id="tx-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="tx-modal-title">明細を追加</h3>
+        <button class="modal-close" onclick="App.closeTxModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="tx-id">
+        <div class="form-group">
+          <label>日付 <span class="required">*</span></label>
+          <input type="date" id="tx-date">
+        </div>
+        <div class="form-group">
+          <label>店名 / 内容 <span class="required">*</span></label>
+          <input type="text" id="tx-store" placeholder="例: マクドナルド">
+        </div>
+        <div class="form-group">
+          <label>金額（円）<span class="required">*</span></label>
+          <input type="number" id="tx-amount" placeholder="例: 1500" min="1">
+        </div>
+        <div class="form-group">
+          <label>カテゴリ <span class="required">*</span></label>
+          <select id="tx-category"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="App.closeTxModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="App.saveTx()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: Category ===== -->
+  <div id="cat-modal" class="modal-overlay" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="cat-modal-title">カテゴリを追加</h3>
+        <button class="modal-close" onclick="App.closeCatModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cat-idx">
+        <div class="form-group">
+          <label>カテゴリ名 <span class="required">*</span></label>
+          <input type="text" id="cat-name" placeholder="例: 交通費">
+        </div>
+        <div class="form-group">
+          <label>色</label>
+          <input type="color" id="cat-color" value="#6366f1">
+        </div>
+        <div class="form-group">
+          <label>キーワード（カンマ区切り）</label>
+          <textarea id="cat-keywords" rows="3" placeholder="例: Suica,バス,地下鉄,電車"></textarea>
+          <small>メールの店名にこのキーワードが含まれると自動振り分けされます</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="App.closeCatModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="App.saveCat()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <!-- App scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/storage.js"></script>
+  <script src="js/parser.js"></script>
+  <script src="js/categorizer.js"></script>
+  <script src="js/gmail.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
