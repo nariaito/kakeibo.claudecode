@@ -506,3 +506,7 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.start());
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/kakeibo.claudecode/sw.js');
+}
