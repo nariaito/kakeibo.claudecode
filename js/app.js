@@ -332,6 +332,18 @@ const App = {
     document.getElementById('save-budget-btn').onclick = () => this.saveBudget();
     document.getElementById('add-category-btn').onclick = () => this.openCatModal();
 
+    document.getElementById('recategorize-btn').onclick = async () => {
+      const all  = Storage._get('transactions', []);
+      const cats = await Storage.getCategories();
+      const updated = all.map(tx => ({
+        ...tx,
+        category: Categorizer.suggest(tx.store, cats),
+      }));
+      Storage._set('transactions', updated);
+      this.toast(`${updated.length}件の明細にカテゴリを再適用しました`, 'success');
+      await this.render();
+    };
+
     document.getElementById('reset-emails-btn').onclick = async () => {
       if (confirm('メール取得履歴をリセットしますか？\n次回の同期時に全メールを再取得します。')) {
         const s = await Storage.getSettings();
