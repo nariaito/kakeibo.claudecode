@@ -1,6 +1,6 @@
 {
   "name": "カード家計簿",
-  "short_name": "家計簿",
+  "short_name": "カード管理",
   "start_url": "/kakeibo.claudecode/",
   "display": "standalone",
   "background_color": "#0f172a",
