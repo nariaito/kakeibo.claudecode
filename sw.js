@@ -1,4 +1,4 @@
-const CACHE = 'kakeibo-v1';
+const CACHE = 'kakeibo-v2';
 const FILES = [
   '/kakeibo.claudecode/',
   '/kakeibo.claudecode/index.html',
@@ -9,6 +9,9 @@ const FILES = [
   '/kakeibo.claudecode/js/categorizer.js',
   '/kakeibo.claudecode/js/gmail.js',
   '/kakeibo.claudecode/js/charts.js',
+  '/kakeibo.claudecode/icon-192.png',
+  '/kakeibo.claudecode/icon-512.png',
+  '/kakeibo.claudecode/manifest.json',
 ];
 
 self.addEventListener('install', e => {
