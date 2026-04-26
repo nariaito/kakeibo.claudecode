@@ -1,4 +1,4 @@
-const CACHE = 'kakeibo-v3';
+const CACHE = 'kakeibo-v4';
 const FILES = [
   '/kakeibo.claudecode/',
   '/kakeibo.claudecode/index.html',
