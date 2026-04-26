@@ -18,6 +18,7 @@ const App = {
     this._bindMonthNav();
     this._bindGmailBtn();
     this._bindModalOverlays();
+    this._bindCatDetailClick();
     document.getElementById('add-tx-btn').addEventListener('click', () => this.openTxModal());
     document.getElementById('refresh-btn').addEventListener('click', () => this.render());
   },
@@ -121,7 +122,7 @@ const App = {
       const pct  = b > 0 ? Math.min(100, (s / b) * 100).toFixed(1) : 0;
 
       html += `
-        <div class="budget-card" style="border-left-color:${cat.color}">
+        <div class="budget-card" style="border-left-color:${cat.color}" data-cat="${this.esc(cat.name)}">
           <div class="budget-header">
             <span class="budget-name" style="color:${cat.color}">${this.esc(cat.name)}</span>
             <span class="budget-remaining ${over ? 'over' : ''}">
@@ -473,9 +474,47 @@ const App = {
     this.toast('削除しました');
   },
 
+  // ===== Category Detail =====
+  _bindCatDetailClick() {
+    document.getElementById('budget-summary').addEventListener('click', e => {
+      const card = e.target.closest('[data-cat]');
+      if (card) this.showCatDetail(card.dataset.cat);
+    });
+  },
+
+  async showCatDetail(catName) {
+    const txs = await Storage.getTxsByMonth(this.year, this.month);
+    const catTxs = txs.filter(t => t.category === catName).sort((a, b) => b.date.localeCompare(a.date));
+
+    document.getElementById('cat-detail-title').textContent = catName;
+
+    const body = document.getElementById('cat-detail-body');
+    if (catTxs.length === 0) {
+      body.innerHTML = '<div class="empty-state">この月の明細はありません</div>';
+    } else {
+      const total = catTxs.reduce((s, t) => s + t.amount, 0);
+      body.innerHTML =
+        `<div class="detail-summary">合計 ¥${total.toLocaleString()} （${catTxs.length}件）</div>` +
+        '<div class="tx-list">' +
+        catTxs.map(tx => `
+          <div class="tx-item">
+            <div class="tx-date">${tx.date.replace(/-/g, '/')}</div>
+            <div class="tx-info"><div class="tx-store">${this.esc(tx.store)}</div></div>
+            <div class="tx-amount">¥${tx.amount.toLocaleString()}</div>
+          </div>`).join('') +
+        '</div>';
+    }
+
+    document.getElementById('cat-detail-modal').style.display = 'flex';
+  },
+
+  closeCatDetail() {
+    document.getElementById('cat-detail-modal').style.display = 'none';
+  },
+
   // ===== Modal overlay（外側クリックで閉じる） =====
   _bindModalOverlays() {
-    ['tx-modal', 'cat-modal'].forEach(id => {
+    ['tx-modal', 'cat-modal', 'cat-detail-modal'].forEach(id => {
       document.getElementById(id).addEventListener('click', e => {
         if (e.target.id === id) document.getElementById(id).style.display = 'none';
       });
